@@ -1,6 +1,8 @@
+import { useState } from 'react';
 import { motion } from 'motion/react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { MapPin, Wind, Thermometer, Sun, CloudRain, AlertTriangle, ArrowRight, Star, Quote } from 'lucide-react';
+import { MapPin, Wind, Thermometer, Sun, CloudRain, AlertTriangle, ArrowRight, Star, Quote, Info } from 'lucide-react';
+import { Modal } from './Modal';
 
 const SNOWFALL_DATA = [
   { day: 'Mon', snow: 12 },
@@ -18,6 +20,8 @@ interface ResortDetailPageProps {
 }
 
 export function ResortDetailPage({ resortId, onBack }: ResortDetailPageProps) {
+  const [isComingSoonOpen, setIsComingSoonOpen] = useState(false);
+
   return (
     <div className="bg-white">
       {/* Hero Section */}
@@ -178,7 +182,10 @@ export function ResortDetailPage({ resortId, onBack }: ResortDetailPageProps) {
                   <p className="text-white font-bold text-lg">Interactive Trail Map</p>
                   <p className="text-white/60 text-xs">Real-time lift status & GPS tracking</p>
                 </div>
-                <button className="btn-primary bg-white text-alpine-dark hover:bg-slate-100">
+                <button 
+                  onClick={() => setIsComingSoonOpen(true)}
+                  className="btn-primary bg-white text-alpine-dark hover:bg-slate-100"
+                >
                   Open Map
                 </button>
               </div>
@@ -195,7 +202,10 @@ export function ResortDetailPage({ resortId, onBack }: ResortDetailPageProps) {
               <h2 className="text-4xl font-bold text-alpine-dark mb-4">ALPINE ELITE</h2>
               <p className="text-slate-500">Professional UIAGM guides specializing in Chamonix's extreme terrain.</p>
             </div>
-            <button className="text-alpine-blue font-semibold flex items-center gap-2 hover:underline">
+            <button 
+              onClick={() => setIsComingSoonOpen(true)}
+              className="text-alpine-blue font-semibold flex items-center gap-2 hover:underline"
+            >
               View all 24 guides
               <ArrowRight className="w-4 h-4" />
             </button>
@@ -222,7 +232,10 @@ export function ResortDetailPage({ resortId, onBack }: ResortDetailPageProps) {
                 <div className="p-6">
                   <h3 className="font-bold text-alpine-dark mb-1">{guide.name}</h3>
                   <p className="text-xs text-slate-500 mb-4 font-medium">{guide.role}</p>
-                  <button className="w-full py-2 border border-slate-200 rounded-lg text-xs font-bold tracking-widest uppercase hover:bg-slate-50 transition-colors">
+                  <button 
+                    onClick={() => setIsComingSoonOpen(true)}
+                    className="w-full py-2 border border-slate-200 rounded-lg text-xs font-bold tracking-widest uppercase hover:bg-slate-50 transition-colors"
+                  >
                     Book Session
                   </button>
                 </div>
@@ -276,6 +289,24 @@ export function ResortDetailPage({ resortId, onBack }: ResortDetailPageProps) {
           </div>
         </div>
       </section>
+
+      <Modal isOpen={isComingSoonOpen} onClose={() => setIsComingSoonOpen(false)} title="Feature Coming Soon">
+        <div className="text-center space-y-6">
+          <div className="w-20 h-20 bg-alpine-blue/10 rounded-full flex items-center justify-center mx-auto">
+            <Info className="w-10 h-10 text-alpine-blue" />
+          </div>
+          <div>
+            <h4 className="text-xl font-bold text-alpine-dark mb-2">Work in Progress</h4>
+            <p className="text-slate-500">This feature is currently being mapped by our team. Check back soon for full integration.</p>
+          </div>
+          <button 
+            onClick={() => setIsComingSoonOpen(false)}
+            className="w-full btn-primary py-4"
+          >
+            Got it
+          </button>
+        </div>
+      </Modal>
     </div>
   );
 }

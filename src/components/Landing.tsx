@@ -1,11 +1,24 @@
+import { useState } from 'react';
 import { motion } from 'motion/react';
-import { ArrowRight, Play, Users, FileText, Map, ShieldCheck } from 'lucide-react';
+import { ArrowRight, Play, Users, FileText, Map, ShieldCheck, CheckCircle2 } from 'lucide-react';
+import { Modal } from './Modal';
 
 interface LandingProps {
   onNavigate: (page: string) => void;
 }
 
 export function Landing({ onNavigate }: LandingProps) {
+  const [isInviteOpen, setIsInviteOpen] = useState(false);
+  const [email, setEmail] = useState('');
+
+  const handleInviteRequest = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (email.trim()) {
+      setIsInviteOpen(true);
+      setEmail('');
+    }
+  };
+
   return (
     <div className="bg-white">
       {/* Hero Section */}
@@ -39,7 +52,10 @@ export function Landing({ onNavigate }: LandingProps) {
                 Start Your Journey
                 <ArrowRight className="w-5 h-5" />
               </button>
-              <button className="btn-secondary bg-white/10 border-white/20 text-white backdrop-blur-md px-8 py-4 text-lg flex items-center gap-2 hover:bg-white/20">
+              <button 
+                onClick={() => onNavigate('resorts')}
+                className="btn-secondary bg-white/10 border-white/20 text-white backdrop-blur-md px-8 py-4 text-lg flex items-center gap-2 hover:bg-white/20"
+              >
                 <Play className="w-5 h-5 fill-current" />
                 View The Range
               </button>
@@ -118,22 +134,25 @@ export function Landing({ onNavigate }: LandingProps) {
             <p className="text-slate-500 mb-8">
               Unlock exclusive access to live trail reports, guide-led forums, and priority booking for winter expeditions. Be part of the conversation at 3,000 meters.
             </p>
-            <div className="space-y-4">
+            <form onSubmit={handleInviteRequest} className="space-y-4">
               <div>
                 <label className="block text-[10px] font-bold text-slate-400 tracking-widest uppercase mb-2">Email Address</label>
                 <input 
                   type="email" 
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   placeholder="alpine.enthusiast@outlook.com" 
                   className="w-full px-4 py-4 bg-slate-50 border-none rounded-xl focus:ring-2 focus:ring-alpine-blue"
                 />
               </div>
-              <button className="w-full btn-primary py-4 text-lg">
+              <button type="submit" className="w-full btn-primary py-4 text-lg">
                 Request Invitation
               </button>
               <p className="text-center text-xs text-slate-400">
-                Already a member? <button className="text-alpine-blue font-semibold hover:underline">Sign in here</button>
+                Already a member? <button onClick={() => onNavigate('profile')} className="text-alpine-blue font-semibold hover:underline">Sign in here</button>
               </p>
-            </div>
+            </form>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
@@ -190,12 +209,37 @@ export function Landing({ onNavigate }: LandingProps) {
               </div>
             </div>
 
-            <button className="btn-secondary bg-transparent border-slate-700 text-white hover:bg-white/10 px-8 py-4">
+            <button 
+              onClick={() => onNavigate('guides')}
+              className="btn-secondary bg-transparent border-slate-700 text-white hover:bg-white/10 px-8 py-4"
+            >
               Meet Our Guides
             </button>
           </div>
         </div>
       </section>
+
+      <Modal 
+        isOpen={isInviteOpen} 
+        onClose={() => setIsInviteOpen(false)} 
+        title="Invitation Requested"
+      >
+        <div className="text-center space-y-6">
+          <div className="w-20 h-20 bg-emerald-50 rounded-full flex items-center justify-center mx-auto">
+            <CheckCircle2 className="w-10 h-10 text-emerald-600" />
+          </div>
+          <div>
+            <h4 className="text-xl font-bold text-alpine-dark mb-2">You're on the list!</h4>
+            <p className="text-slate-500">We've received your request. Our team will review your application and send an invitation to your email shortly.</p>
+          </div>
+          <button 
+            onClick={() => setIsInviteOpen(false)}
+            className="w-full btn-primary py-4"
+          >
+            Got it
+          </button>
+        </div>
+      </Modal>
     </div>
   );
 }

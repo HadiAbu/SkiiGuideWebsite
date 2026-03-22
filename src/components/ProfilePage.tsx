@@ -1,7 +1,9 @@
+import { useState } from 'react';
 import { motion } from 'motion/react';
-import { Settings, MapPin, Calendar, ArrowRight, Star, Shield, CreditCard, Bell, LogOut, User as UserIcon } from 'lucide-react';
+import { Settings, MapPin, Calendar, ArrowRight, Star, Shield, CreditCard, Bell, LogOut, User as UserIcon, Info, CheckCircle2 } from 'lucide-react';
 import { auth, logout } from '../firebase';
 import { useAuthState } from 'react-firebase-hooks/auth';
+import { Modal } from './Modal';
 
 interface ProfilePageProps {
   onNavigate: (page: string) => void;
@@ -9,6 +11,8 @@ interface ProfilePageProps {
 
 export function ProfilePage({ onNavigate }: ProfilePageProps) {
   const [user] = useAuthState(auth);
+  const [isComingSoonOpen, setIsComingSoonOpen] = useState(false);
+  const [isExportSuccessOpen, setIsExportSuccessOpen] = useState(false);
 
   if (!user) return null;
 
@@ -42,6 +46,7 @@ export function ProfilePage({ onNavigate }: ProfilePageProps) {
               ].map((item) => (
                 <button 
                   key={item.label}
+                  onClick={() => !item.active && setIsComingSoonOpen(true)}
                   className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all ${
                     item.active ? 'bg-white text-alpine-blue shadow-sm border border-slate-100' : 'text-slate-500 hover:bg-slate-50'
                   }`}
@@ -64,7 +69,10 @@ export function ProfilePage({ onNavigate }: ProfilePageProps) {
               <div className="absolute -top-4 -right-4 w-24 h-24 bg-alpine-blue/20 blur-2xl rounded-full" />
               <h4 className="font-bold mb-2 relative z-10">Level Up Your Adventure</h4>
               <p className="text-xs text-white/60 mb-6 leading-relaxed relative z-10">Get unlimited access to pro guides and real-time avalanche data.</p>
-              <button className="w-full py-2 bg-alpine-blue text-white rounded-lg text-xs font-bold tracking-widest uppercase hover:bg-opacity-90 transition-all relative z-10">
+              <button 
+                onClick={() => setIsComingSoonOpen(true)}
+                className="w-full py-2 bg-alpine-blue text-white rounded-lg text-xs font-bold tracking-widest uppercase hover:opacity-90 transition-all relative z-10"
+              >
                 Upgrade Pro
               </button>
             </div>
@@ -99,14 +107,23 @@ export function ProfilePage({ onNavigate }: ProfilePageProps) {
           <section>
             <div className="flex items-center justify-between mb-8">
               <h2 className="text-2xl font-bold text-alpine-dark">Favorite Resorts</h2>
-              <button className="text-alpine-blue font-semibold text-sm hover:underline">Manage all</button>
+              <button 
+                onClick={() => onNavigate('resorts')}
+                className="text-alpine-blue font-semibold text-sm hover:underline"
+              >
+                Manage all
+              </button>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {[
-                { name: 'Chamonix', location: 'France', img: 'https://picsum.photos/seed/chamonix-fav/600/400', rating: 4.9 },
-                { name: 'St. Anton', location: 'Austria', img: 'https://picsum.photos/seed/stanton-fav/600/400', rating: 4.8 },
+                { id: 'chamonix', name: 'Chamonix', location: 'France', img: 'https://picsum.photos/seed/chamonix-fav/600/400', rating: 4.9 },
+                { id: 'st-anton', name: 'St. Anton', location: 'Austria', img: 'https://picsum.photos/seed/stanton-fav/600/400', rating: 4.8 },
               ].map((resort) => (
-                <div key={resort.name} className="group relative h-48 rounded-2xl overflow-hidden cursor-pointer shadow-sm">
+                <div 
+                  key={resort.name} 
+                  onClick={() => onNavigate('resorts')}
+                  className="group relative h-48 rounded-2xl overflow-hidden cursor-pointer shadow-sm"
+                >
                   <img src={resort.img} alt={resort.name} className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" referrerPolicy="no-referrer" />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
                   <div className="absolute bottom-0 left-0 p-6 w-full flex items-end justify-between">
@@ -128,7 +145,12 @@ export function ProfilePage({ onNavigate }: ProfilePageProps) {
           <section>
             <div className="flex items-center justify-between mb-8">
               <h2 className="text-2xl font-bold text-alpine-dark">My Trips History</h2>
-              <button className="text-alpine-blue font-semibold text-sm hover:underline">Export data</button>
+              <button 
+                onClick={() => setIsExportSuccessOpen(true)}
+                className="text-alpine-blue font-semibold text-sm hover:underline"
+              >
+                Export data
+              </button>
             </div>
             <div className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
               <div className="divide-y divide-slate-100">
@@ -167,6 +189,42 @@ export function ProfilePage({ onNavigate }: ProfilePageProps) {
           </section>
         </main>
       </div>
+
+      <Modal isOpen={isComingSoonOpen} onClose={() => setIsComingSoonOpen(false)} title="Feature Coming Soon">
+        <div className="text-center space-y-6">
+          <div className="w-20 h-20 bg-alpine-blue/10 rounded-full flex items-center justify-center mx-auto">
+            <Info className="w-10 h-10 text-alpine-blue" />
+          </div>
+          <div>
+            <h4 className="text-xl font-bold text-alpine-dark mb-2">Work in Progress</h4>
+            <p className="text-slate-500">Our team is currently mapping this feature. Check back soon for full integration.</p>
+          </div>
+          <button 
+            onClick={() => setIsComingSoonOpen(false)}
+            className="w-full btn-primary py-4"
+          >
+            Got it
+          </button>
+        </div>
+      </Modal>
+
+      <Modal isOpen={isExportSuccessOpen} onClose={() => setIsExportSuccessOpen(false)} title="Export Successful">
+        <div className="text-center space-y-6">
+          <div className="w-20 h-20 bg-emerald-50 rounded-full flex items-center justify-center mx-auto">
+            <CheckCircle2 className="w-10 h-10 text-emerald-600" />
+          </div>
+          <div>
+            <h4 className="text-xl font-bold text-alpine-dark mb-2">Data Ready</h4>
+            <p className="text-slate-500">Your trip history has been exported and sent to your registered email address.</p>
+          </div>
+          <button 
+            onClick={() => setIsExportSuccessOpen(false)}
+            className="w-full btn-primary py-4"
+          >
+            Got it
+          </button>
+        </div>
+      </Modal>
     </div>
   );
 }

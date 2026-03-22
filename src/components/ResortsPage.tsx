@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { Filter, ChevronDown, MapPin, Wind, Thermometer, ArrowRight } from 'lucide-react';
 
@@ -70,13 +70,57 @@ const MOCK_RESORTS: Resort[] = [
 
 interface ResortsPageProps {
   onSelectResort: (id: string) => void;
+  initialSearch?: string;
 }
 
-export function ResortsPage({ onSelectResort }: ResortsPageProps) {
+export function ResortsPage({ onSelectResort, initialSearch = '' }: ResortsPageProps) {
   const [activeFilters, setActiveFilters] = useState({
     difficulty: [] as string[],
     amenities: [] as string[]
   });
+  const [snowBase, setSnowBase] = useState(150);
+  const [currentPage, setCurrentPage] = useState(2);
+  const [searchQuery, setSearchQuery] = useState(initialSearch);
+
+  useEffect(() => {
+    if (initialSearch) {
+      setSearchQuery(initialSearch);
+    }
+  }, [initialSearch]);
+
+  const toggleFilter = (type: 'difficulty' | 'amenities', value: string) => {
+    setActiveFilters(prev => {
+      const current = prev[type];
+      const next = current.includes(value)
+        ? current.filter(v => v !== value)
+        : [...current, value];
+      return { ...prev, [type]: next };
+    });
+  };
+
+  const clearFilters = () => {
+    setActiveFilters({ difficulty: [], amenities: [] });
+    setSnowBase(0);
+  };
+
+  const filteredResorts = MOCK_RESORTS.filter(resort => {
+    const searchMatch = !searchQuery || 
+      resort.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      resort.location.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    const difficultyMatch = activeFilters.difficulty.length === 0 || 
+      resort.difficulty.some(d => activeFilters.difficulty.includes(d));
+    
+    const amenityMatch = activeFilters.amenities.length === 0 || 
+      resort.amenities.some(a => activeFilters.amenities.includes(a));
+    
+    const snowMatch = parseInt(resort.snowDepth) >= snowBase;
+
+    return searchMatch && difficultyMatch && amenityMatch && snowMatch;
+  });
+
+  const featuredResort = filteredResorts.find(r => r.featured) || filteredResorts[0];
+  const otherResorts = filteredResorts.filter(r => r.id !== featuredResort?.id);
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -89,7 +133,12 @@ export function ResortsPage({ onSelectResort }: ResortsPageProps) {
                 <Filter className="w-4 h-4" />
                 Filters
               </h3>
-              <button className="text-xs text-alpine-blue font-semibold hover:underline">Clear all</button>
+              <button 
+                onClick={clearFilters}
+                className="text-xs text-alpine-blue font-semibold hover:underline"
+              >
+                Clear all
+              </button>
             </div>
 
             {/* Terrain Difficulty */}
@@ -101,8 +150,15 @@ export function ResortsPage({ onSelectResort }: ResortsPageProps) {
               <div className="space-y-3">
                 {['Beginner', 'Intermediate', 'Expert', 'Pro'].map((level) => (
                   <label key={level} className="flex items-center gap-3 cursor-pointer group">
-                    <input type="checkbox" className="w-4 h-4 rounded border-slate-300 text-alpine-blue focus:ring-alpine-blue" />
-                    <span className="text-sm text-slate-600 group-hover:text-alpine-dark">{level}</span>
+                    <input 
+                      type="checkbox" 
+                      checked={activeFilters.difficulty.includes(level)}
+                      onChange={() => toggleFilter('difficulty', level)}
+                      className="w-4 h-4 rounded border-slate-300 text-alpine-blue focus:ring-alpine-blue" 
+                    />
+                    <span className={`text-sm group-hover:text-alpine-dark ${activeFilters.difficulty.includes(level) ? 'text-alpine-dark font-bold' : 'text-slate-600'}`}>
+                      {level}
+                    </span>
                   </label>
                 ))}
               </div>
@@ -117,20 +173,34 @@ export function ResortsPage({ onSelectResort }: ResortsPageProps) {
               <div className="space-y-3">
                 {['Spa', 'Fine Dining', 'Heli-ski', 'Apres Ski', 'Night Skiing'].map((item) => (
                   <label key={item} className="flex items-center gap-3 cursor-pointer group">
-                    <input type="checkbox" className="w-4 h-4 rounded border-slate-300 text-alpine-blue focus:ring-alpine-blue" />
-                    <span className="text-sm text-slate-600 group-hover:text-alpine-dark">{item}</span>
+                    <input 
+                      type="checkbox" 
+                      checked={activeFilters.amenities.includes(item)}
+                      onChange={() => toggleFilter('amenities', item)}
+                      className="w-4 h-4 rounded border-slate-300 text-alpine-blue focus:ring-alpine-blue" 
+                    />
+                    <span className={`text-sm group-hover:text-alpine-dark ${activeFilters.amenities.includes(item) ? 'text-alpine-dark font-bold' : 'text-slate-600'}`}>
+                      {item}
+                    </span>
                   </label>
                 ))}
               </div>
             </div>
 
-            {/* Snow Base Slider Placeholder */}
+            {/* Snow Base Slider */}
             <div>
               <button className="w-full flex items-center justify-between font-bold text-xs tracking-widest uppercase text-slate-400 mb-4">
-                Snow Base (cm)
+                Min Snow Base: {snowBase}cm
                 <ChevronDown className="w-4 h-4" />
               </button>
-              <input type="range" min="0" max="500" className="w-full h-1 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-alpine-blue" />
+              <input 
+                type="range" 
+                min="0" 
+                max="500" 
+                value={snowBase}
+                onChange={(e) => setSnowBase(parseInt(e.target.value))}
+                className="w-full h-1 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-alpine-blue" 
+              />
               <div className="flex justify-between text-[10px] font-bold text-slate-400 mt-2">
                 <span>0CM</span>
                 <span>500CM</span>
@@ -142,29 +212,29 @@ export function ResortsPage({ onSelectResort }: ResortsPageProps) {
         {/* Main Content */}
         <main className="flex-1">
           {/* Featured Resort */}
-          {MOCK_RESORTS.filter(r => r.featured).map(resort => (
+          {featuredResort && (
             <motion.div 
-              key={resort.id}
+              key={featuredResort.id}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               className="relative rounded-3xl overflow-hidden mb-12 group cursor-pointer"
-              onClick={() => onSelectResort(resort.id)}
+              onClick={() => onSelectResort(featuredResort.id)}
             >
-              <img src={resort.img} alt={resort.name} className="w-full h-[400px] object-cover transition-transform duration-700 group-hover:scale-105" referrerPolicy="no-referrer" />
+              <img src={featuredResort.img} alt={featuredResort.name} className="w-full h-[400px] object-cover transition-transform duration-700 group-hover:scale-105" referrerPolicy="no-referrer" />
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
               <div className="absolute bottom-0 left-0 p-10 w-full">
                 <div className="flex items-center gap-2 text-white/60 text-xs font-bold tracking-widest mb-2">
                   <MapPin className="w-3 h-3" />
-                  {resort.country} • {resort.location}
+                  {featuredResort.country} • {featuredResort.location}
                 </div>
-                <h2 className="text-5xl font-bold text-white mb-6">{resort.name}</h2>
+                <h2 className="text-5xl font-bold text-white mb-6">{featuredResort.name}</h2>
                 <div className="flex flex-wrap gap-8">
                   <div className="flex items-center gap-3">
                     <div className="p-2 bg-white/10 backdrop-blur-md rounded-lg">
                       <Wind className="w-5 h-5 text-white" />
                     </div>
                     <div>
-                      <p className="text-white font-bold">{resort.snowDepth}</p>
+                      <p className="text-white font-bold">{featuredResort.snowDepth}</p>
                       <p className="text-[10px] font-bold text-white/60 tracking-widest uppercase">Base Depth</p>
                     </div>
                   </div>
@@ -173,21 +243,27 @@ export function ResortsPage({ onSelectResort }: ResortsPageProps) {
                       <Thermometer className="w-5 h-5 text-white" />
                     </div>
                     <div>
-                      <p className="text-white font-bold">{resort.temp}</p>
+                      <p className="text-white font-bold">{featuredResort.temp}</p>
                       <p className="text-[10px] font-bold text-white/60 tracking-widest uppercase">Temperature</p>
                     </div>
                   </div>
-                  <button className="ml-auto btn-primary bg-white text-alpine-dark hover:bg-slate-100">
+                  <button 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onSelectResort(featuredResort.id);
+                    }}
+                    className="ml-auto btn-primary bg-white text-alpine-dark hover:bg-slate-100"
+                  >
                     View Resort
                   </button>
                 </div>
               </div>
             </motion.div>
-          ))}
+          )}
 
           {/* Resort Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {MOCK_RESORTS.filter(r => !r.featured).map((resort, i) => (
+            {otherResorts.map((resort, i) => (
               <motion.div 
                 key={resort.id}
                 initial={{ opacity: 0, y: 20 }}
@@ -235,13 +311,44 @@ export function ResortsPage({ onSelectResort }: ResortsPageProps) {
             ))}
           </div>
 
+          {filteredResorts.length === 0 && (
+            <div className="text-center py-20">
+              <p className="text-slate-500 text-lg">No resorts match your current filters.</p>
+              <button 
+                onClick={clearFilters}
+                className="mt-4 text-alpine-blue font-bold hover:underline"
+              >
+                Clear all filters
+              </button>
+            </div>
+          )}
+
           {/* Pagination */}
           <div className="mt-16 flex items-center justify-center gap-2">
-            <button className="w-10 h-10 rounded-lg border border-slate-200 flex items-center justify-center text-slate-400 hover:border-alpine-blue hover:text-alpine-blue transition-all">1</button>
-            <button className="w-10 h-10 rounded-lg bg-alpine-blue text-white flex items-center justify-center font-bold shadow-lg shadow-alpine-blue/20">2</button>
-            <button className="w-10 h-10 rounded-lg border border-slate-200 flex items-center justify-center text-slate-400 hover:border-alpine-blue hover:text-alpine-blue transition-all">3</button>
+            {[1, 2, 3].map(page => (
+              <button 
+                key={page}
+                onClick={() => setCurrentPage(page)}
+                className={`w-10 h-10 rounded-lg border transition-all flex items-center justify-center font-bold ${
+                  currentPage === page 
+                    ? 'bg-alpine-blue text-white border-alpine-blue shadow-lg shadow-alpine-blue/20' 
+                    : 'border-slate-200 text-slate-400 hover:border-alpine-blue hover:text-alpine-blue'
+                }`}
+              >
+                {page}
+              </button>
+            ))}
             <span className="mx-2 text-slate-300">...</span>
-            <button className="w-10 h-10 rounded-lg border border-slate-200 flex items-center justify-center text-slate-400 hover:border-alpine-blue hover:text-alpine-blue transition-all">12</button>
+            <button 
+              onClick={() => setCurrentPage(12)}
+              className={`w-10 h-10 rounded-lg border transition-all flex items-center justify-center font-bold ${
+                currentPage === 12 
+                  ? 'bg-alpine-blue text-white border-alpine-blue shadow-lg shadow-alpine-blue/20' 
+                  : 'border-slate-200 text-slate-400 hover:border-alpine-blue hover:text-alpine-blue'
+              }`}
+            >
+              12
+            </button>
           </div>
         </main>
       </div>

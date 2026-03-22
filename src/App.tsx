@@ -16,6 +16,7 @@ function AppContent() {
   const [user, loading, error] = useAuthState(auth);
   const [currentPage, setCurrentPage] = useState('landing');
   const [selectedResortId, setSelectedResortId] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
 
   // Test Firestore connection
   useEffect(() => {
@@ -31,9 +32,12 @@ function AppContent() {
     testConnection();
   }, []);
 
-  const handleNavigate = (page: string) => {
+  const handleNavigate = (page: string, query?: string) => {
     setCurrentPage(page);
     setSelectedResortId(null);
+    if (query !== undefined) {
+      setSearchQuery(query);
+    }
     window.scrollTo(0, 0);
   };
 
@@ -75,7 +79,7 @@ function AppContent() {
       case 'landing':
         return <Landing onNavigate={handleNavigate} />;
       case 'resorts':
-        return <ResortsPage onSelectResort={handleSelectResort} />;
+        return <ResortsPage onSelectResort={handleSelectResort} initialSearch={searchQuery} />;
       case 'resort-detail':
         return selectedResortId ? (
           <ResortDetailPage resortId={selectedResortId} onBack={() => handleNavigate('resorts')} />
@@ -141,9 +145,9 @@ function AppContent() {
                 <h4 className="text-xs font-bold text-slate-500 tracking-widest uppercase mb-6">Explore</h4>
                 <ul className="space-y-4 text-sm font-medium text-slate-400">
                   <li><button onClick={() => handleNavigate('resorts')} className="hover:text-white transition-colors">Peak Resorts</button></li>
-                  <li><button className="hover:text-white transition-colors">Guide Network</button></li>
-                  <li><button className="hover:text-white transition-colors">Expeditions</button></li>
-                  <li><button className="hover:text-white transition-colors">Gear Reviews</button></li>
+                  <li><button onClick={() => handleNavigate('guides')} className="hover:text-white transition-colors">Guide Network</button></li>
+                  <li><button onClick={() => handleNavigate('community')} className="hover:text-white transition-colors">Expeditions</button></li>
+                  <li><button onClick={() => handleNavigate('weather')} className="hover:text-white transition-colors">Gear Reviews</button></li>
                 </ul>
               </div>
 
