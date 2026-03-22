@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { motion } from 'motion/react';
-import { LogIn, Github, Mail, Lock, ArrowRight, CheckCircle2, Info } from 'lucide-react';
-import { signInWithGoogle } from '../firebase';
+import { LogIn, Github, Mail, Lock, ArrowRight, CheckCircle2, Info, Loader2 } from 'lucide-react';
+import { signInWithGoogle, signInWithEmail, signUpWithEmail } from '../firebase';
 import { Modal } from './Modal';
 
 export function LoginPage() {
@@ -9,6 +9,10 @@ export function LoginPage() {
   const [isComingSoonOpen, setIsComingSoonOpen] = useState(false);
   const [isInviteOpen, setIsInviteOpen] = useState(false);
   const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [mode, setMode] = useState<'signin' | 'signup'>('signin');
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleComingSoon = (e?: React.FormEvent) => {
     e?.preventDefault();
@@ -18,6 +22,37 @@ export function LoginPage() {
   const handleInviteRequest = (e: React.FormEvent) => {
     e.preventDefault();
     setIsInviteOpen(true);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email || !password) return;
+    
+    setIsLoading(true);
+    setError(null);
+    try {
+      if (mode === 'signin') {
+        await signInWithEmail(email, password);
+      } else {
+        await signUpWithEmail(email, password);
+      }
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleGoogleSignIn = async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      await signInWithGoogle();
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -70,22 +105,28 @@ export function LoginPage() {
           className="max-w-md w-full"
         >
           <div className="mb-12">
-            <h2 className="text-3xl font-bold text-alpine-dark mb-2">Welcome Back</h2>
-            <p className="text-slate-500">Please enter your details to access the range.</p>
+            <h2 className="text-3xl font-bold text-alpine-dark mb-2">
+              {mode === 'signin' ? 'Welcome Back' : 'Join the Range'}
+            </h2>
+            <p className="text-slate-500">
+              {mode === 'signin' ? 'Please enter your details to access the range.' : 'Create your account to start your alpine journey.'}
+            </p>
           </div>
 
           {/* Social Logins */}
           <div className="grid grid-cols-2 gap-4 mb-8">
             <button 
-              onClick={signInWithGoogle}
-              className="flex items-center justify-center gap-3 px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-700 hover:bg-slate-50 transition-all shadow-sm group"
+              onClick={handleGoogleSignIn}
+              disabled={isLoading}
+              className="flex items-center justify-center gap-3 px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-700 hover:bg-slate-50 transition-all shadow-sm group disabled:opacity-50"
             >
               <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" className="w-5 h-5" />
               Google
             </button>
             <button 
               onClick={() => handleComingSoon()}
-              className="flex items-center justify-center gap-3 px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-700 hover:bg-slate-50 transition-all shadow-sm group"
+              disabled={isLoading}
+              className="flex items-center justify-center gap-3 px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-700 hover:bg-slate-50 transition-all shadow-sm group disabled:opacity-50"
             >
               <Github className="w-5 h-5" />
               GitHub
@@ -102,7 +143,12 @@ export function LoginPage() {
           </div>
 
           {/* Email Form */}
-          <form className="space-y-6" onSubmit={handleComingSoon}>
+          <form className="space-y-6" onSubmit={handleSubmit}>
+            {error && (
+              <div className="p-4 bg-rose-50 border border-rose-100 rounded-xl text-sm text-rose-600 font-medium">
+                {error}
+              </div>
+            )}
             <div>
               <label className="block text-[10px] font-bold text-slate-400 tracking-widest uppercase mb-2">Email Address</label>
               <div className="relative">
@@ -112,6 +158,7 @@ export function LoginPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="alpine.enthusiast@outlook.com" 
+                  required
                   className="w-full pl-12 pr-4 py-4 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-alpine-blue focus:border-transparent transition-all"
                 />
               </div>
@@ -120,37 +167,62 @@ export function LoginPage() {
             <div>
               <div className="flex items-center justify-between mb-2">
                 <label className="block text-[10px] font-bold text-slate-400 tracking-widest uppercase">Password</label>
-                <button 
-                  type="button"
-                  onClick={() => setIsForgotOpen(true)}
-                  className="text-[10px] font-bold text-alpine-blue tracking-widest uppercase hover:underline"
-                >
-                  Forgot password?
-                </button>
+                {mode === 'signin' && (
+                  <button 
+                    type="button"
+                    onClick={() => setIsForgotOpen(true)}
+                    className="text-[10px] font-bold text-alpine-blue tracking-widest uppercase hover:underline"
+                  >
+                    Forgot password?
+                  </button>
+                )}
               </div>
               <div className="relative">
                 <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
                 <input 
                   type="password" 
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••" 
+                  required
                   className="w-full pl-12 pr-4 py-4 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-alpine-blue focus:border-transparent transition-all"
                 />
               </div>
             </div>
 
-            <div className="flex items-center gap-3">
-              <input type="checkbox" className="w-4 h-4 rounded border-slate-300 text-alpine-blue focus:ring-alpine-blue" id="remember" />
-              <label htmlFor="remember" className="text-sm text-slate-600 font-medium cursor-pointer">Stay signed in for 30 days</label>
-            </div>
+            {mode === 'signin' && (
+              <div className="flex items-center gap-3">
+                <input type="checkbox" className="w-4 h-4 rounded border-slate-300 text-alpine-blue focus:ring-alpine-blue" id="remember" />
+                <label htmlFor="remember" className="text-sm text-slate-600 font-medium cursor-pointer">Stay signed in for 30 days</label>
+              </div>
+            )}
 
-            <button type="submit" className="w-full btn-primary py-4 text-lg flex items-center justify-center gap-2 group">
-              Sign In to Alpine
-              <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+            <button 
+              type="submit" 
+              disabled={isLoading}
+              className="w-full btn-primary py-4 text-lg flex items-center justify-center gap-2 group disabled:opacity-50"
+            >
+              {isLoading ? (
+                <Loader2 className="w-5 h-5 animate-spin" />
+              ) : (
+                <>
+                  {mode === 'signin' ? 'Sign In to Alpine' : 'Create Alpine Account'}
+                  <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                </>
+              )}
             </button>
           </form>
 
           <p className="mt-8 text-center text-sm text-slate-500">
-            Don't have an account? <button onClick={() => setIsInviteOpen(true)} className="text-alpine-blue font-bold hover:underline">Request an invitation</button>
+            {mode === 'signin' ? (
+              <>
+                Don't have an account? <button onClick={() => setMode('signup')} className="text-alpine-blue font-bold hover:underline">Sign up now</button>
+              </>
+            ) : (
+              <>
+                Already have an account? <button onClick={() => setMode('signin')} className="text-alpine-blue font-bold hover:underline">Sign in instead</button>
+              </>
+            )}
           </p>
         </motion.div>
       </section>
@@ -183,7 +255,7 @@ export function LoginPage() {
           </div>
           <div>
             <h4 className="text-xl font-bold text-alpine-dark mb-2">Work in Progress</h4>
-            <p className="text-slate-500">This authentication method is currently being mapped. For now, please use Google Sign-In to access the range.</p>
+            <p className="text-slate-500">This authentication method is currently being mapped. For now, please use Google Sign-In or Email/Password to access the range.</p>
           </div>
           <button 
             onClick={() => setIsComingSoonOpen(false)}

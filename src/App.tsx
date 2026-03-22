@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { auth, db } from './firebase';
-import { doc, getDocFromServer } from 'firebase/firestore';
+import { doc, getDocFromServer, setDoc, serverTimestamp } from 'firebase/firestore';
 import { Navbar } from './components/Navbar';
 import { Landing } from './components/Landing';
 import { ResortsPage } from './components/ResortsPage';
@@ -31,6 +31,43 @@ function AppContent() {
     };
     testConnection();
   }, []);
+
+  // Sync user profile to Firestore
+  useEffect(() => {
+    if (user) {
+      const syncUser = async () => {
+        try {
+          const userRef = doc(db, 'users', user.uid);
+          const userSnap = await getDocFromServer(userRef);
+          
+          if (!userSnap.exists()) {
+            await setDoc(userRef, {
+              uid: user.uid,
+              displayName: user.displayName || 'Alpine Enthusiast',
+              email: user.email,
+              photoURL: user.photoURL,
+              role: 'user',
+              createdAt: serverTimestamp(),
+              totalRuns: 0,
+              favoritePeak: 'None',
+              verticalM: '0'
+            });
+          }
+        } catch (err) {
+          console.error("Error syncing user profile:", err);
+        }
+      };
+      syncUser();
+    }
+  }, [user]);
+
+  // Post-login redirection
+  useEffect(() => {
+    if (user && currentPage === 'landing') {
+      // If user logs in while on landing, we can stay or move. 
+      // Let's stay for now, but ensure Navbar reflects state.
+    }
+  }, [user, currentPage]);
 
   const handleNavigate = (page: string, query?: string) => {
     setCurrentPage(page);

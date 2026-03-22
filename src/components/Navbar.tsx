@@ -29,6 +29,17 @@ export function Navbar({ onNavigate, currentPage }: NavbarProps) {
     }
   };
 
+  const handleSignIn = async () => {
+    try {
+      await signInWithGoogle();
+      if (currentPage === 'landing') {
+        onNavigate('resorts');
+      }
+    } catch (error) {
+      console.error("Sign in error:", error);
+    }
+  };
+
   return (
     <>
       <nav className="sticky top-0 z-50 bg-white border-b border-slate-200">
@@ -100,7 +111,7 @@ export function Navbar({ onNavigate, currentPage }: NavbarProps) {
               </div>
             ) : (
               <button
-                onClick={signInWithGoogle}
+                onClick={handleSignIn}
                 className="btn-secondary text-sm"
               >
                 Sign In
