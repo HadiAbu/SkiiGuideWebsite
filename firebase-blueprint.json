@@ -1,0 +1,100 @@
+{
+  "entities": {
+    "User": {
+      "title": "User Profile",
+      "description": "Private user information",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "The unique ID of the user" },
+        "displayName": { "type": "string", "description": "The display name of the user" },
+        "email": { "type": "string", "format": "email", "description": "The email address of the user" },
+        "photoURL": { "type": "string", "format": "uri", "description": "The URL of the user's profile picture" },
+        "bio": { "type": "string", "description": "A short bio of the user" },
+        "role": { "type": "string", "enum": ["admin", "user"], "description": "The role of the user" },
+        "totalRuns": { "type": "integer" },
+        "favoritePeak": { "type": "string" },
+        "verticalM": { "type": "string" }
+      },
+      "required": ["uid", "displayName", "email"]
+    },
+    "Post": {
+      "title": "Social Post",
+      "description": "A post shared by a user",
+      "type": "object",
+      "properties": {
+        "authorUid": { "type": "string", "description": "The UID of the post author" },
+        "authorName": { "type": "string", "description": "The name of the post author" },
+        "authorPhoto": { "type": "string", "format": "uri", "description": "The photo URL of the post author" },
+        "content": { "type": "string", "description": "The text content of the post" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "The timestamp when the post was created" },
+        "likesCount": { "type": "integer", "description": "The number of likes on the post" }
+      },
+      "required": ["authorUid", "authorName", "content", "createdAt"]
+    },
+    "Resort": {
+      "title": "Alpine Resort",
+      "description": "Information about a ski resort",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "country": { "type": "string" },
+        "image": { "type": "string" },
+        "elevation": { "type": "integer" },
+        "peakAlt": { "type": "string" },
+        "rating": { "type": "number" },
+        "snowDepth": { "type": "string" },
+        "weatherTemp": { "type": "integer" },
+        "weatherStatus": { "type": "string" },
+        "difficulty": { "type": "string" },
+        "amenities": { "type": "array", "items": { "type": "string" } },
+        "status": { "type": "string" }
+      }
+    },
+    "Guide": {
+      "title": "Mountain Guide",
+      "description": "Professional mountain guide profile",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "title": { "type": "string" },
+        "experience": { "type": "string" },
+        "rating": { "type": "number" },
+        "photo": { "type": "string" }
+      }
+    },
+    "Trip": {
+      "title": "User Trip",
+      "description": "A recorded or planned trip for a user",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "title": { "type": "string" },
+        "date": { "type": "string" },
+        "location": { "type": "string" },
+        "status": { "type": "string" }
+      }
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "Private user profiles"
+    },
+    "/posts/{postId}": {
+      "schema": "Post",
+      "description": "Public social posts"
+    },
+    "/resorts/{resortId}": {
+      "schema": "Resort",
+      "description": "Public resort information"
+    },
+    "/guides/{guideId}": {
+      "schema": "Guide",
+      "description": "Public guide profiles"
+    },
+    "/trips/{tripId}": {
+      "schema": "Trip",
+      "description": "User specific trips"
+    }
+  }
+}

@@ -1,0 +1,7 @@
+{
+  "name": "Alpine Perspective",
+  "description": "A high-end alpine destination and community platform for mountain enthusiasts.",
+  "requestFramePermissions": [
+    "geolocation"
+  ]
+}
